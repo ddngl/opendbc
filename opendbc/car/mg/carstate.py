@@ -48,17 +48,21 @@ class CarState(CarStateBase):
 
     ret.accFaulted = cp_cam.vl["FVCM_HSC2_FrP02"]["TJAICASysFltStsHSC2"] != 0  # TODO: validate
 
+    # Forward collision + pedestrian warning (stock, from front radar)
+    ret.stockFcw = bool(cp.vl["RADAR_HSC2_FrP04"]["FCWAHSC2"] or cp.vl["RADAR_HSC2_FrP04"]["PedtrnColWrnngAHSC2"])
+
     # Gear
     ret.gearShifter = GEAR_MAP.get(int(cp.vl["GW_HSC2_ECM_FrP04"]["TrEstdGearHSC2"]), GearShifter.unknown)
 
     # Doors
     ret.doorOpen = False  # TODO
 
-    # Blinkers - read the actual indicator LAMP (stays on through the 3-blink "comfort"
-    # signal), with a hold so a brief stalk tap still registers long enough for lane change.
-    left_lamp = cp.vl["GW_HSC2_BCM_FrP04"]["LDircnIndLghtFHSC2"] == 1
-    right_lamp = cp.vl["GW_HSC2_BCM_FrP04"]["RDircnIndLghtFHSC2"] == 1
-    ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(50, left_lamp, right_lamp)
+    # Blinkers - the stalk switch (DircnIndLampSwStsHSC2: 0 off/1 left/2 right) is what
+    # the cluster shows and is reliably populated; a brief "comfort" tap only reads for a
+    # moment, so hold it ~1s via update_blinker_from_stalk so lane change still triggers.
+    left_stalk = cp.vl["GW_HSC2_BCM_FrP04"]["DircnIndLampSwStsHSC2"] == 1
+    right_stalk = cp.vl["GW_HSC2_BCM_FrP04"]["DircnIndLampSwStsHSC2"] == 2
+    ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_stalk(100, left_stalk, right_stalk)
 
     # Seatbelt
     ret.seatbeltUnlatched = cp.vl["GW_HSC2_SDM_FrP00"]["DrvrSbltAtcHSC2"] != 1

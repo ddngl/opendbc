@@ -319,3 +319,8 @@ BO_ 516 RDA_HSC1_P02: 8 RDA
  SG_ LBSDAndLCAWrnng_HS : 7|2@0+ (1,0) [0|3] ""  FVCM
  SG_ RBSDAndLCAWrnng_HS : 5|2@0+ (1,0) [0|3] ""  FVCM
  SG_ RDASysSta_HS : 23|5@0+ (1,0) [0|31] ""  FVCM
+
+BO_ 898 RADAR_HSC2_FrP04: 8 FDR
+ SG_ FCWAHSC2 : 47|1@0+ (1,0) [0|1] ""  GW
+ SG_ FCWTimeToColHSC2 : 7|8@0+ (0.1,0) [0|25.5] ""  GW
+ SG_ PedtrnColWrnngAHSC2 : 15|1@0+ (1,0) [0|1] ""  GW
