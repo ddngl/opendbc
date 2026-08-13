@@ -17,6 +17,12 @@ class CarState(CarStateBase):
     ret = structs.CarState()
     ret_sp = structs.CarStateSP()
 
+    # Speed limit from the forward camera's traffic-sign recognition (ISA), for SLC.
+    # TrgtSpdReqCamr = recognized limit (km/h) on the camera bus; status>0 when a sign is active.
+    tsr_spd = cp_cam.vl["FVCM_HSC2_FrP02"]["TrgtSpdReqCamrHSC2"]
+    tsr_sts = cp_cam.vl["FVCM_HSC2_FrP02"]["SpdAstReqStsCamrHSC2"]
+    ret_sp.speedLimit = float(tsr_spd) * CV.KPH_TO_MS if (tsr_sts > 0 and 0 < tsr_spd < 200) else 0.0
+
     # Vehicle speed
     ret.vEgoRaw = cp.vl["SCS_HSC2_FrP19"]["VehSpdAvgHSC2"] * CV.KPH_TO_MS
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
