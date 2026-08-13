@@ -3,7 +3,6 @@
 #include "opendbc/safety/declarations.h"
 
 static bool mg_zs_ev_brake = false;
-static bool mg_acc_engaged_prev = false;  // AOL: latch controls_allowed through ACC standby
 
 static void mg_rx_hook(const CANPacket_t *msg) {
   if (msg->bus == 0U)  {
@@ -41,15 +40,11 @@ static void mg_rx_hook(const CANPacket_t *msg) {
       int cruise_state = (msg->data[5] & 0x38U) >> 3;
       bool cruise_engaged = (cruise_state == 2) ||  // Active
                             (cruise_state == 3);    // Override
-      // Always-on lateral: enable controls on ACC engage, KEEP them through standby
-      // (state 1, e.g. while braking) so steering does not cut; drop only when the
-      // driver turns ACC off at the stalk (state 0 = off).
-      if (cruise_state == 0) {
-        controls_allowed = false;
-      } else if (cruise_engaged && !mg_acc_engaged_prev) {
-        controls_allowed = true;
-      }
-      mg_acc_engaged_prev = cruise_engaged;
+      pcm_cruise_check(cruise_engaged);
+      // ACC main on (standby/active/override; 0=off). MADS uses acc_main_on to manage
+      // controls_allowed_lateral for always-on-lateral (steer through brake) without a
+      // custom controls_allowed latch (which conflicted with MADS -> controlsMismatch).
+      acc_main_on = (cruise_state != 0);
     }
   }
 }
