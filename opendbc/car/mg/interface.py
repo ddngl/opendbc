@@ -23,6 +23,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerControlType = structs.CarParams.SteerControlType.torque
     ret.radarUnavailable = True
+    ret.enableBsm = True  # RDA_HSC1_P02 blind-spot
 
     ret.alphaLongitudinalAvailable = False
     if alpha_long:

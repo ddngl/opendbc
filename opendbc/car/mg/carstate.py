@@ -63,9 +63,9 @@ class CarState(CarStateBase):
     # Seatbelt
     ret.seatbeltUnlatched = cp.vl["GW_HSC2_SDM_FrP00"]["DrvrSbltAtcHSC2"] != 1
 
-    # Blindspot
-    # ret.leftBlindspot = False
-    # ret.rightBlindspot = False
+    # Blindspot (RDA rear-corner radar; confirmed against a left-only capture)
+    ret.leftBlindspot = cp.vl["RDA_HSC1_P02"]["LBSDAndLCAWrnng_HS"] > 0
+    ret.rightBlindspot = cp.vl["RDA_HSC1_P02"]["RBSDAndLCAWrnng_HS"] > 0
 
     # AEB
     ret.stockAeb = False

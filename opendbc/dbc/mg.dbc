@@ -314,3 +314,8 @@ VAL_ 1130 RLDoorOpenStsHSC2 3 "Rear Left Door Full Open" 2 "Rear Left Door Ajar"
 VAL_ 1130 RRDoorOpenStsHSC2 3 "Rear Right Door Full Open" 2 "Rear Right Door Ajar" 1 "Rear Right Door Open(latch switch cann't detect door ajar status" 0 "Rear Right Door Closed" ;
 VAL_ 1130 RrFogLghtOnHSC2 1 "True" 0 "False" ;
 VAL_ 1130 VehSideLghtStsHSC2 3 "All side light and license plate light on" 2 "Right side light on only" 1 "Left side light on only" 0 "No side light on " ;
+
+BO_ 516 RDA_HSC1_P02: 8 RDA
+ SG_ LBSDAndLCAWrnng_HS : 7|2@0+ (1,0) [0|3] ""  FVCM
+ SG_ RBSDAndLCAWrnng_HS : 5|2@0+ (1,0) [0|3] ""  FVCM
+ SG_ RDASysSta_HS : 23|5@0+ (1,0) [0|31] ""  FVCM
