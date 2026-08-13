@@ -54,9 +54,11 @@ class CarState(CarStateBase):
     # Doors
     ret.doorOpen = False  # TODO
 
-    # Blinkers
-    ret.leftBlinker = cp.vl["GW_HSC2_BCM_FrP04"]["DircnIndLampSwStsHSC2"] == 1
-    ret.rightBlinker = cp.vl["GW_HSC2_BCM_FrP04"]["DircnIndLampSwStsHSC2"] == 2
+    # Blinkers - read the actual indicator LAMP (stays on through the 3-blink "comfort"
+    # signal), with a hold so a brief stalk tap still registers long enough for lane change.
+    left_lamp = cp.vl["GW_HSC2_BCM_FrP04"]["LDircnIndLghtFHSC2"] == 1
+    right_lamp = cp.vl["GW_HSC2_BCM_FrP04"]["RDircnIndLghtFHSC2"] == 1
+    ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(50, left_lamp, right_lamp)
 
     # Seatbelt
     ret.seatbeltUnlatched = cp.vl["GW_HSC2_SDM_FrP00"]["DrvrSbltAtcHSC2"] != 1
