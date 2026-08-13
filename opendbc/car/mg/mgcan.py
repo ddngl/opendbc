@@ -53,7 +53,7 @@ HUD_TJA_STS_READY   = 1  # TJAICASysStsHSC2                  1 = standby when no
 HUD_TJA_FLT         = 0  # TJAICASysFltStsHSC2        (61|3) 0 = no fault
 
 
-def create_lka_hud(packer, active):
+def create_lka_hud(packer, active, tsr_spd=0.0, tsr_sts=0, tsr_dist=-100.0):
   # Mimic the FVCM camera's own 0x167 (measured constant on this car) so the cluster
   # sees a "normal" HUD, but MUTE the audible/haptic warning (LDWhaptic=0).
   # Camera baseline: HandOff=1, Valid=0, LDWdsp=5, TJAdsp=2, TJAsts=0, TJAflt=0, LDWhaptic=2.
@@ -65,5 +65,9 @@ def create_lka_hud(packer, active):
     "TJAICADspCmdHSC2":  2,
     "TJAICASysStsHSC2":  0,
     "TJAICASysFltStsHSC2": 0,
+    # Relay the camera's traffic-sign speed limit to the cluster so the dash shows the sign again
+    "TrgtSpdReqCamrHSC2": tsr_spd,
+    "SpdAstReqStsCamrHSC2": tsr_sts,
+    "DistSinceTrgtCamrHSC2": tsr_dist,
   }
   return packer.make_can_msg("FVCM_HSC2_FrP02", 0, values)

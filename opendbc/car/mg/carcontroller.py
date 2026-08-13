@@ -30,13 +30,10 @@ class CarController(CarControllerBase):
       self.apply_torque_last = apply_torque
       can_sends.append(create_lka_steering(self.packer, (self.frame // CarControllerParams.STEER_STEP) % 16, apply_torque, CC.latActive))
 
-      # HUD/nag suppression: spoof the FVCM camera status (0x167) onto bus 0
-      # so the cluster stops the "hands on wheel" warning. Same 50Hz cadence.
-      # ONLY while actually steering (latActive); disengaged/standstill sends caused the nag.
-      # HUD/nag suppression: spoof FVCM 0x167 while steering. Kills the AUDIBLE nag.
-      # (visual "hands on wheel" icon may remain — tuning HUD_* in mgcan.py.)
-      if CC.latActive:
-        can_sends.append(create_lka_hud(self.packer, CC.latActive))
+      # 0x167 HUD to the cluster: no-nag values + RELAY the camera's speed-limit sign
+      # (TrgtSpdReqCamr) so the dashboard shows the limit again. Sent every 50Hz regardless
+      # of latActive so the sign shows even when not actively steering.
+      can_sends.append(create_lka_hud(self.packer, CC.latActive, CS.tsr_spd, CS.tsr_sts, CS.tsr_dist))
 
     new_actuators = actuators.as_builder()
     new_actuators.torque = self.apply_torque_last / CarControllerParams.STEER_MAX

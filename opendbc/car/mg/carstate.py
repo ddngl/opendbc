@@ -10,6 +10,9 @@ GearShifter = structs.CarState.GearShifter
 class CarState(CarStateBase):
   def __init__(self, CP, CP_SP):
     super().__init__(CP, CP_SP)
+    self.tsr_spd = 0.0    # camera speed limit (km/h) to relay to cluster
+    self.tsr_sts = 0
+    self.tsr_dist = -100.0
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
@@ -22,6 +25,10 @@ class CarState(CarStateBase):
     tsr_spd = cp_cam.vl["FVCM_HSC2_FrP02"]["TrgtSpdReqCamrHSC2"]
     tsr_sts = cp_cam.vl["FVCM_HSC2_FrP02"]["SpdAstReqStsCamrHSC2"]
     ret_sp.speedLimit = float(tsr_spd) * CV.KPH_TO_MS if (tsr_sts > 0 and 0 < tsr_spd < 200) else 0.0
+    # stash raw camera TSR values so the carcontroller can relay them to the cluster (dash)
+    self.tsr_spd = float(tsr_spd)
+    self.tsr_sts = int(tsr_sts)
+    self.tsr_dist = float(cp_cam.vl["FVCM_HSC2_FrP02"]["DistSinceTrgtCamrHSC2"])
 
     # Vehicle speed
     ret.vEgoRaw = cp.vl["SCS_HSC2_FrP19"]["VehSpdAvgHSC2"] * CV.KPH_TO_MS
