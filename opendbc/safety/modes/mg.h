@@ -80,7 +80,8 @@ static bool mg_tx_hook(const CANPacket_t *msg) {
 
 static safety_config mg_init(uint16_t param) {
   static const CanMsg MG_TX_MSGS[] = {{0x1fd, 0, 8, .check_relay = true},
-                                     {0x167, 0, 8, .check_relay = true}};
+                                     {0x167, 0, 8, .check_relay = true},
+                                     {0x1e1, 0, 7, .check_relay = false}};  // GW_HSC2_FrP04 cruise-button spoof (ICBM)
 
   static RxCheck mg_rx_checks[] = {
     {.msg = {{0x23c, 0, 8, .frequency = 50U, .ignore_checksum = true, .ignore_counter = true, .ignore_quality_flag = true}, { 0 }, { 0 }}},   // SCS_HSC2_FrP19 (speed)

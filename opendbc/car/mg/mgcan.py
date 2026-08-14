@@ -53,6 +53,53 @@ HUD_TJA_STS_READY   = 1  # TJAICASysStsHSC2                  1 = standby when no
 HUD_TJA_FLT         = 0  # TJAICASysFltStsHSC2        (61|3) 0 = no fault
 
 
+# ---------------------------------------------------------------------------
+# Intelligent Cruise Button Management (ICBM): spoof the cruise +/- buttons.
+# BO_ 481 (0x1E1) GW_HSC2_FrP04 "CCSwSts..." is the cruise-control switch-status
+# frame (7 bytes, sent by the GW). openpilot injects it on bus 0 to nudge the
+# STOCK ACC set-speed up/down without any longitudinal control.
+#   - CCSwStsSpdIncSwA_h2HSC2 (bit 3)  = RES+ / speed-increase press
+#   - CCSwStsSpdDecSwA_h2HSC2 (bit 2)  = SET- / speed-decrease press
+#   - CCSwStsPV_h2HSC2       (15|8)    = 8-bit checksum  (data byte 1)
+#   - CCSwStsAlvRC_h2HSC2    (17|2)    = 2-bit alive/rolling counter
+# ---------------------------------------------------------------------------
+CC_BUTTONS_MSG = "GW_HSC2_FrP04"  # BO_ 481 / 0x1E1
+
+
+def calc_cc_checksum(dat: bytes) -> int:
+  # VERIFIED against real BO_481 captures (route c7189f9c62 seg 12, 2000 bus-0
+  # frames): the PV byte (data byte 1) makes the 8-bit sum of ALL 7 data bytes
+  # equal 0, i.e. PV = two's complement of the sum of every other data byte.
+  # Real idle samples that confirm it: 40 c0 00.. / 40 bf 01.. / 40 be 02.. / 40 bd 03..
+  return (-sum(b for i, b in enumerate(dat) if i != 1)) & 0xFF
+
+
+def create_cruise_buttons(packer, counter, accel=False, decel=False):
+  # Build a single BO_481 frame with exactly one of RES+/SET- asserted.
+  # CCSwStsOnSwA is the latched "cruise system on" state and is set constantly in
+  # the stock stream (real idle byte0 = 0x40 = OnSwA=1). It MUST stay set or the
+  # ACC ECU reads the frame as "system off" and ignores the button. ICBM only ever
+  # sends while stock ACC is engaged, so OnSwA=1 always. A correct RES+ frame is
+  # therefore 48 b8 00.. (0x40 OnSwA | 0x08 SpdInc, PV closes the sum to 0).
+  values = {
+    "CCSwStsSwDataIntgty_h2HSC2": 0,               # 0 = Data Valid
+    "CCSwStsSpdIncSwA_h2HSC2": 1 if accel else 0,  # RES+ / speed increase
+    "CCSwStsSpdDecSwA_h2HSC2": 1 if decel else 0,  # SET- / speed decrease
+    "CCSwStsSetSwA_h2HSC2": 0,
+    "CCSwStsRsmSwA_h2HSC2": 0,
+    "CCSwStsOnSwA_h2HSC2": 1,                       # keep cruise-on base (0x40)
+    "CCSwStsCanclSwA_h2HSC2": 0,
+    "CCSwStsDistIncSwA_h2HSC2": 0,
+    "CCSwStsDistDecSwA_h2HSC2": 0,
+    "CCSwStsAlvRC_h2HSC2": counter & 0x3,
+    "CCSwStsPV_h2HSC2": 0,
+  }
+  # Pack once with PV=0 to get the payload bytes, compute the checksum, then repack.
+  _, dat, _ = packer.make_can_msg(CC_BUTTONS_MSG, 0, values)
+  values["CCSwStsPV_h2HSC2"] = calc_cc_checksum(dat)
+  return packer.make_can_msg(CC_BUTTONS_MSG, 0, values)
+
+
 def create_lka_hud(packer, active, tsr_spd=0.0, tsr_sts=0, tsr_dist=-100.0):
   # Mimic the FVCM camera's own 0x167 (measured constant on this car) so the cluster
   # sees a "normal" HUD, but MUTE the audible/haptic warning (LDWhaptic=0).

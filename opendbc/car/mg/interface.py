@@ -34,3 +34,12 @@ class CarInterface(CarInterfaceBase):
     ret.stopAccel = 0
 
     return ret
+
+  @staticmethod
+  def _get_params_sp(stock_cp: structs.CarParams, ret: structs.CarParamsSP, candidate, fingerprint: dict[int, dict[int, int]],
+                     car_fw: list[structs.CarParams.CarFw], alpha_long: bool, is_release_sp: bool, docs: bool) -> structs.CarParamsSP:
+    # ICBM: with STOCK ACC (no openpilot longitudinal), spoof the cruise +/- buttons
+    # (BO_481 / 0x1E1) to adjust set-speed. Only takes effect when not openpilotLongitudinalControl.
+    ret.intelligentCruiseButtonManagementAvailable = True
+
+    return ret

@@ -5,10 +5,13 @@ from opendbc.car.interfaces import CarControllerBase
 from opendbc.car.mg.mgcan import create_lka_steering, create_lka_hud
 from opendbc.car.mg.values import CarControllerParams
 
+from opendbc.sunnypilot.car.mg.icbm import IntelligentCruiseButtonManagementInterface
 
-class CarController(CarControllerBase):
+
+class CarController(CarControllerBase, IntelligentCruiseButtonManagementInterface):
   def __init__(self, dbc_names, CP, CP_SP):
-    super().__init__(dbc_names, CP, CP_SP)
+    CarControllerBase.__init__(self, dbc_names, CP, CP_SP)
+    IntelligentCruiseButtonManagementInterface.__init__(self, CP, CP_SP)
     self.packer = CANPacker(dbc_names[Bus.pt])
 
     self.apply_torque_last = 0
@@ -34,6 +37,9 @@ class CarController(CarControllerBase):
       # (TrgtSpdReqCamr) so the dashboard shows the limit again. Sent every 50Hz regardless
       # of latActive so the sign shows even when not actively steering.
       can_sends.append(create_lka_hud(self.packer, CC.latActive, CS.tsr_spd, CS.tsr_sts, CS.tsr_dist))
+
+    # Intelligent Cruise Button Management (spoof cruise +/- on stock ACC)
+    can_sends.extend(IntelligentCruiseButtonManagementInterface.update(self, CC_SP, CS, self.packer, self.frame, self.last_button_frame))
 
     new_actuators = actuators.as_builder()
     new_actuators.torque = self.apply_torque_last / CarControllerParams.STEER_MAX
